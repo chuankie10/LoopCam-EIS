@@ -2,6 +2,7 @@ package com.loopcam.eis
 
 import android.Manifest
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.camera2.*
 import android.media.MediaRecorder
@@ -56,6 +57,20 @@ class MainActivity : Activity() {
             setPadding(16, 12, 16, 12)
             setBackgroundColor(0xFF101820.toInt())
         }
+        val orientationRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL }
+        val orientationLabel = TextView(this).apply { text = "Tampilan:"; textSize = 14f; setTextColor(0xFFFFFFFF.toInt()) }
+        val orientationSpinner = Spinner(this)
+        val orientationAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("Landscape", "Portrait")).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+        orientationSpinner.adapter = orientationAdapter
+        orientationSpinner.setSelection(if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) 1 else 0)
+        orientationSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                requestedOrientation = if (position == 1) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+        }
+        orientationRow.addView(orientationLabel)
+        orientationRow.addView(orientationSpinner, LinearLayout.LayoutParams(0, -2, 1f))
         val title = TextView(this).apply {
             text = "LOOPCAM EIS  •  BETA"; textSize = 22f
             setTextColor(0xFFFFFFFF.toInt()); gravity = android.view.Gravity.CENTER
@@ -77,7 +92,7 @@ class MainActivity : Activity() {
         stopButton = Button(this).apply { text = "STOP"; isEnabled = false; setOnClickListener { stopLoop() } }
         controls.addView(startButton, LinearLayout.LayoutParams(0, -2, 1f))
         controls.addView(stopButton, LinearLayout.LayoutParams(0, -2, 1f))
-        root.addView(title); root.addView(preview); root.addView(status); root.addView(timer); root.addView(controls)
+        root.addView(title); root.addView(orientationRow); root.addView(preview); root.addView(status); root.addView(timer); root.addView(controls)
         setContentView(root)
         preview.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surface: android.graphics.SurfaceTexture, width: Int, height: Int) { openCamera() }
@@ -112,7 +127,7 @@ class MainActivity : Activity() {
             manager.openCamera(id, object : CameraDevice.StateCallback() {
                 override fun onOpened(value: CameraDevice) {
                     camera = value
-                    status.text = "Kamera siap • ${videoSize.width}×${videoSize.height} • EIS ${if (eisAvailable) "tersedia" else "tidak tersedia"}"
+                    status.text = "Kamera siap • ${videoSize.width}×${videoSize.height} • EIS ${if (eisAvailable) "tersedia (belum diverifikasi)" else "tidak didukung oleh Camera2 perangkat"}"
                     startButton.isEnabled = true
                     createPreviewSession()
                 }
@@ -197,7 +212,7 @@ class MainActivity : Activity() {
                         }.build()
                         value.setRepeatingRequest(request, null, cameraHandler)
                         mr.start()
-                        status.text = "MEREKAM • Segmen $segment • EIS ${if (eisAvailable) "diminta" else "tidak didukung"} • Filter angin belum tersedia"
+                        status.text = "MEREKAM • Segmen $segment • EIS ${if (eisAvailable) "diminta (belum diverifikasi)" else "tidak didukung oleh Camera2"} • Filter angin belum tersedia"
                         segmentTask = Runnable { finishSegment() }.also { ui.postDelayed(it, 10_000) }
                     } catch (e: Exception) { status.text = "Gagal mulai: ${e.message}"; stopLoop() }
                 }
