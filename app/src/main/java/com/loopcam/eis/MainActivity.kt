@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.hardware.camera2.*
 import android.media.MediaRecorder
-import android.media.audiofx.NoiseSuppressor
 import android.os.*
 import android.util.Size
 import android.view.Surface
@@ -30,7 +29,6 @@ class MainActivity : Activity() {
     private var camera: CameraDevice? = null
     private var session: CameraCaptureSession? = null
     private var recorder: MediaRecorder? = null
-    private var noiseSuppressor: NoiseSuppressor? = null
     private var videoSize = Size(1920, 1080)
     private var eisAvailable = false
     private var recording = false
@@ -183,10 +181,6 @@ class MainActivity : Activity() {
             mr.setAudioEncodingBitRate(128_000)
             mr.setAudioSamplingRate(44100)
             mr.prepare()
-            if (NoiseSuppressor.isAvailable()) {
-                try { noiseSuppressor = NoiseSuppressor.create(mr.audioSessionId)?.apply { enabled = true } }
-                catch (_: Exception) { noiseSuppressor = null }
-            }
             val videoSurface = mr.surface
             val texture = preview.surfaceTexture ?: throw IllegalStateException("Preview tidak tersedia")
             texture.setDefaultBufferSize(videoSize.width, videoSize.height)
@@ -203,7 +197,7 @@ class MainActivity : Activity() {
                         }.build()
                         value.setRepeatingRequest(request, null, cameraHandler)
                         mr.start()
-                        status.text = "MEREKAM • Segmen $segment • EIS ${if (eisAvailable) "diminta" else "tidak didukung"} • Noise suppressor ${if (noiseSuppressor != null) "aktif" else "tidak tersedia"}"
+                        status.text = "MEREKAM • Segmen $segment • EIS ${if (eisAvailable) "diminta" else "tidak didukung"} • Filter angin belum tersedia"
                         segmentTask = Runnable { finishSegment() }.also { ui.postDelayed(it, 10_000) }
                     } catch (e: Exception) { status.text = "Gagal mulai: ${e.message}"; stopLoop() }
                 }
@@ -234,8 +228,6 @@ class MainActivity : Activity() {
     }
 
     private fun releaseRecorder() {
-        try { noiseSuppressor?.release() } catch (_: Exception) {}
-        noiseSuppressor = null
         try { recorder?.reset(); recorder?.release() } catch (_: Exception) {}
         recorder = null
     }
