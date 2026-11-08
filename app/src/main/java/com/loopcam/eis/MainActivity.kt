@@ -120,7 +120,7 @@ class MainActivity : Activity() {
                 }
                 override fun onDisconnected(value: CameraDevice) { value.close(); camera = null; status.text = "Kamera terputus" }
                 override fun onError(value: CameraDevice, error: Int) { value.close(); camera = null; status.text = "Kesalahan kamera: $error" }
-            }, cameraHandler)
+            }, Handler(Looper.getMainLooper()))
         } catch (e: Exception) { status.text = "Gagal membuka kamera: ${e.message}" }
     }
 
@@ -143,7 +143,7 @@ class MainActivity : Activity() {
                     } catch (e: Exception) { status.text = "Preview gagal: ${e.message}" }
                 }
                 override fun onConfigureFailed(value: CameraCaptureSession) { status.text = "Konfigurasi preview gagal" }
-            }, cameraHandler)
+            }, Handler(Looper.getMainLooper()))
         } catch (e: Exception) { status.text = "Preview gagal: ${e.message}" }
     }
 
@@ -208,7 +208,7 @@ class MainActivity : Activity() {
                     } catch (e: Exception) { status.text = "Gagal mulai: ${e.message}"; stopLoop() }
                 }
                 override fun onConfigureFailed(value: CameraCaptureSession) { status.text = "Konfigurasi rekaman gagal"; stopLoop() }
-            }, cameraHandler)
+            }, Handler(Looper.getMainLooper()))
         } catch (e: Exception) { status.text = "Gagal menyiapkan segmen: ${e.message}"; stopLoop() }
     }
 
