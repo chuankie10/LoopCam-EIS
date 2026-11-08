@@ -8,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.loopcam.eis"
+        applicationId = "com.loopcam.eis.v2"
         minSdk = 29
         targetSdk = 35
         versionCode = 1
